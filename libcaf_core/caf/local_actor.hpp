@@ -149,9 +149,24 @@ class local_actor : public abstract_actor, public resumable {
    * Sends `{xs...}` to `dest` using the priority `mp`.
    */
   template <class... Ts>
+  void anon_send(message_priority mp, msg_sink dest, Ts&&... xs) {
+    send_impl(true, message_id::make(mp), dest, std::forward<Ts>(xs)...);
+  }
+
+  /**
+   * Sends `{xs...}` to `dest` using normal priority.
+   */
+  template <class... Ts>
+  void anon_send(msg_sink dest, Ts&&... xs) {
+    send_impl(true, message_id::make(), dest, std::forward<Ts>(xs)...);
+  }
+
+  /**
+   * Sends `{xs...}` to `dest` using the priority `mp`.
+   */
+  template <class... Ts>
   void send(message_priority mp, msg_sink dest, Ts&&... xs) {
-    static_assert(sizeof...(Ts) > 0, "sizeof...(Ts) == 0");
-    send_impl(message_id::make(mp), dest, std::forward<Ts>(xs)...);
+    send_impl(false, message_id::make(mp), dest, std::forward<Ts>(xs)...);
   }
 
   /**
@@ -159,7 +174,7 @@ class local_actor : public abstract_actor, public resumable {
    */
   template <class... Ts>
   void send(msg_sink dest, Ts&&... xs) {
-    send_impl(message_id::make(), dest, std::forward<Ts>(xs)...);
+    send_impl(false, message_id::make(), dest, std::forward<Ts>(xs)...);
   }
 
   /**
@@ -174,7 +189,7 @@ class local_actor : public abstract_actor, public resumable {
         >::type...>;
     token tk;
     check_typed_input(dest, tk);
-    send_impl(message_id::make(mp), actor_cast<abstract_channel*>(dest),
+    send_impl(false, message_id::make(mp), actor_cast<abstract_channel*>(dest),
               std::forward<Ts>(xs)...);
   }
 
@@ -183,7 +198,7 @@ class local_actor : public abstract_actor, public resumable {
    */
   template <class... Sigs, class... Ts>
   void send(const typed_actor<Sigs...>& dest, Ts&&... xs) {
-    send_impl(message_id::make(), actor_cast<abstract_channel*>(dest),
+    send_impl(false, message_id::make(), actor_cast<abstract_channel*>(dest),
               std::forward<Ts>(xs)...);
   }
 
@@ -500,7 +515,7 @@ class local_actor : public abstract_actor, public resumable {
       throw std::invalid_argument("cannot sync_send to invalid_actor");
     }
     auto req_id = new_request_id(mp);
-    send_impl(req_id, actor_cast<abstract_channel*>(dh),
+    send_impl(false, req_id, actor_cast<abstract_channel*>(dh),
               std::forward<Ts>(xs)...);
     return req_id.response_id();
   }
@@ -649,18 +664,22 @@ class local_actor : public abstract_actor, public resumable {
   typename std::enable_if<
     !std::is_same<typename std::decay<T>::type, message>::value
   >::type
-  send_impl(message_id mid, msg_sink dest, T&& x, Ts&&... xs) {
+  send_impl(bool anon, message_id mid, msg_sink dest, T&& x, Ts&&... xs) {
     if (!dest) {
       return;
     }
-    dest->enqueue(mailbox_element::make_joint(address(),
+    actor_addr from;
+    if (!anon) {
+      from = address();
+    }
+    dest->enqueue(mailbox_element::make_joint(std::move(from),
                                               mid,
                                               std::forward<T>(x),
                                               std::forward<Ts>(xs)...),
                   host());
   }
 
-  void send_impl(message_id mp, msg_sink dest, message what);
+  void send_impl(bool anon, message_id mp, msg_sink dest, message what);
 
   void delayed_send_impl(message_id mid, msg_sink whom,
                          const duration& rtime, message data);
@@ -678,12 +697,12 @@ using local_actor_ptr = intrusive_ptr<local_actor>;
 // <backward_compatibility version="0.9">
 inline void local_actor::send_tuple(message_priority mp, const channel& whom,
                                     message what) {
-  send_impl(message_id::make(mp), actor_cast<abstract_channel*>(whom),
+  send_impl(false, message_id::make(mp), actor_cast<abstract_channel*>(whom),
             std::move(what));
 }
 
 inline void local_actor::send_tuple(const channel& whom, message what) {
-  send_impl(message_id::make(), actor_cast<abstract_channel*>(whom),
+  send_impl(false, message_id::make(), actor_cast<abstract_channel*>(whom),
             std::move(what));
 }
 

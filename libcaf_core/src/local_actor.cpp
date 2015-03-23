@@ -797,11 +797,16 @@ void local_actor::await_data() {
   mailbox().synchronized_await(m_mtx, m_cv);
 }
 
-void local_actor::send_impl(message_id mid, msg_sink dest, message what) {
+void local_actor::send_impl(bool anon, message_id mid,
+                            msg_sink dest, message what) {
   if (!dest) {
     return;
   }
-  dest->enqueue(address(), mid, std::move(what), host());
+  actor_addr from;
+  if (!anon) {
+    from = address();
+  }
+  dest->enqueue(std::move(from), mid, std::move(what), host());
 }
 
 void local_actor::send_exit(const actor_addr& whom, uint32_t reason) {
