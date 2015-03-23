@@ -34,12 +34,14 @@
 #include "caf/channel.hpp"
 #include "caf/duration.hpp"
 #include "caf/behavior.hpp"
+#include "caf/msg_sink.hpp"
 #include "caf/spawn_fwd.hpp"
 #include "caf/resumable.hpp"
 #include "caf/actor_cast.hpp"
 #include "caf/message_id.hpp"
 #include "caf/exit_reason.hpp"
 #include "caf/typed_actor.hpp"
+#include "caf/local_actor.hpp"
 #include "caf/spawn_options.hpp"
 #include "caf/abstract_actor.hpp"
 #include "caf/abstract_group.hpp"
@@ -147,19 +149,17 @@ class local_actor : public abstract_actor, public resumable {
    * Sends `{xs...}` to `dest` using the priority `mp`.
    */
   template <class... Ts>
-  void send(message_priority mp, const channel& dest, Ts&&... xs) {
+  void send(message_priority mp, msg_sink dest, Ts&&... xs) {
     static_assert(sizeof...(Ts) > 0, "sizeof...(Ts) == 0");
-    send_impl(message_id::make(mp), actor_cast<abstract_channel*>(dest),
-              std::forward<Ts>(xs)...);
+    send_impl(message_id::make(mp), dest, std::forward<Ts>(xs)...);
   }
 
   /**
    * Sends `{xs...}` to `dest` using normal priority.
    */
   template <class... Ts>
-  void send(const channel& dest, Ts&&... xs) {
-    send_impl(message_id::make(), actor_cast<abstract_channel*>(dest),
-              std::forward<Ts>(xs)...);
+  void send(msg_sink dest, Ts&&... xs) {
+    send_impl(message_id::make(), dest, std::forward<Ts>(xs)...);
   }
 
   /**
@@ -649,7 +649,7 @@ class local_actor : public abstract_actor, public resumable {
   typename std::enable_if<
     !std::is_same<typename std::decay<T>::type, message>::value
   >::type
-  send_impl(message_id mid, abstract_channel* dest, T&& x, Ts&&... xs) {
+  send_impl(message_id mid, msg_sink dest, T&& x, Ts&&... xs) {
     if (!dest) {
       return;
     }
@@ -660,9 +660,9 @@ class local_actor : public abstract_actor, public resumable {
                   host());
   }
 
-  void send_impl(message_id mp, abstract_channel* dest, message what);
+  void send_impl(message_id mp, msg_sink dest, message what);
 
-  void delayed_send_impl(message_id mid, const channel& whom,
+  void delayed_send_impl(message_id mid, msg_sink whom,
                          const duration& rtime, message data);
 
   std::function<void()> m_sync_failure_handler;

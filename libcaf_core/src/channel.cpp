@@ -21,6 +21,7 @@
 #include "caf/group.hpp"
 #include "caf/channel.hpp"
 #include "caf/message.hpp"
+#include "caf/msg_sink.hpp"
 #include "caf/actor_cast.hpp"
 
 namespace caf {
@@ -31,6 +32,11 @@ channel::channel(const actor& other)
 }
 
 channel::channel(const group& other) : m_ptr(other.ptr()) {
+  // nop
+}
+
+channel::channel(const msg_sink& other)
+    : m_ptr(actor_cast<abstract_channel*>(other)) {
   // nop
 }
 

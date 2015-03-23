@@ -46,11 +46,9 @@ constexpr invalid_group_t invalid_group = invalid_group_t{};
 
 class group : detail::comparable<group>,
               detail::comparable<group, invalid_group_t> {
-
+ public:
   template <class T, typename U>
   friend T actor_cast(const U&);
-
- public:
 
   group() = default;
 
@@ -68,20 +66,28 @@ class group : detail::comparable<group>,
 
   group(intrusive_ptr<abstract_group> ptr);
 
-  inline explicit operator bool() const { return static_cast<bool>(m_ptr); }
+  inline explicit operator bool() const noexcept {
+    return static_cast<bool>(m_ptr);
+  }
 
-  inline bool operator!() const { return !static_cast<bool>(m_ptr); }
+  inline bool operator!() const noexcept {
+    return !static_cast<bool>(m_ptr);
+  }
 
   /**
    * Returns a handle that grants access to actor operations such as enqueue.
    */
-  inline abstract_group* operator->() const { return m_ptr.get(); }
+  inline abstract_group* operator->() const noexcept {
+    return m_ptr.get();
+  }
 
-  inline abstract_group& operator*() const { return *m_ptr; }
+  inline abstract_group& operator*() const noexcept {
+    return *m_ptr;
+  }
 
-  intptr_t compare(const group& other) const;
+  intptr_t compare(const group& other) const noexcept;
 
-  inline intptr_t compare(const invalid_actor_t&) const {
+  inline intptr_t compare(const invalid_actor_t&) const noexcept {
     return m_ptr ? 1 : 0;
   }
 
@@ -113,11 +119,15 @@ class group : detail::comparable<group>,
   static abstract_group::module_ptr
   get_module(const std::string& module_name);
 
-  inline const abstract_group_ptr& ptr() const {
+  inline const abstract_group_ptr& ptr() const noexcept {
     return m_ptr;
   }
 
  private:
+  inline abstract_group* get() const noexcept {
+    return m_ptr.get();
+  }
+
   abstract_group_ptr m_ptr;
 };
 

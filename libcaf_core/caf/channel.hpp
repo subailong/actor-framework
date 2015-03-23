@@ -23,21 +23,13 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "caf/intrusive_ptr.hpp"
-
 #include "caf/fwd.hpp"
+#include "caf/intrusive_ptr.hpp"
 #include "caf/abstract_channel.hpp"
 
 #include "caf/detail/comparable.hpp"
 
 namespace caf {
-
-class actor;
-class group;
-class execution_unit;
-
-struct invalid_actor_t;
-struct invalid_group_t;
 
 /**
  * A handle to instances of `abstract_channel`.
@@ -54,6 +46,8 @@ class channel : detail::comparable<channel>,
   channel(const actor&);
 
   channel(const group&);
+
+  channel(const msg_sink&);
 
   channel(const invalid_actor_t&);
 

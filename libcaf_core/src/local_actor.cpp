@@ -797,8 +797,7 @@ void local_actor::await_data() {
   mailbox().synchronized_await(m_mtx, m_cv);
 }
 
-void local_actor::send_impl(message_id mid, abstract_channel* dest,
-                            message what) {
+void local_actor::send_impl(message_id mid, msg_sink dest, message what) {
   if (!dest) {
     return;
   }
@@ -810,7 +809,7 @@ void local_actor::send_exit(const actor_addr& whom, uint32_t reason) {
        exit_msg{address(), reason});
 }
 
-void local_actor::delayed_send_impl(message_id mid, const channel& dest,
+void local_actor::delayed_send_impl(message_id mid, msg_sink dest,
                                     const duration& rel_time, message msg) {
   auto sched_cd = detail::singletons::get_scheduling_coordinator();
   sched_cd->delayed_send(rel_time, address(), dest, mid, std::move(msg));

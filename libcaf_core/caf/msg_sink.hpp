@@ -17,46 +17,68 @@
  * http://www.boost.org/LICENSE_1_0.txt.                                      *
  ******************************************************************************/
 
-#include "caf/group.hpp"
-#include "caf/channel.hpp"
-#include "caf/message.hpp"
+#ifndef CAF_MSG_SINK_HPP
+#define CAF_MSG_SINK_HPP
 
-#include "caf/detail/singletons.hpp"
-#include "caf/detail/group_manager.hpp"
+#include "caf/fwd.hpp"
+#include "caf/actor_cast.hpp"
+#include "caf/abstract_channel.hpp"
+
+#include "caf/detail/comparable.hpp"
 
 namespace caf {
 
-group::group(const invalid_group_t&) : m_ptr(nullptr) {
-  // nop
-}
+/**
+ * A non-owning handle to a dynamically typed message sink. It is similar
+ * to `channel`, except that it does not manipulate the reference count
+ * of its target.
+ */
+class msg_sink : detail::comparable<msg_sink> {
+ public:
+  template <class T, typename U>
+  friend T actor_cast(const U&);
 
-group::group(abstract_group_ptr gptr) : m_ptr(std::move(gptr)) {
-  // nop
-}
+  using pointer = abstract_channel*;
 
-group& group::operator=(const invalid_group_t&) {
-  m_ptr.reset();
-  return *this;
-}
+  constexpr msg_sink() noexcept : m_ptr(nullptr) {
+    // nop
+  }
 
-intptr_t group::compare(const group& other) const noexcept {
-  return channel::compare(m_ptr.get(), other.m_ptr.get());
-}
+  msg_sink(const actor& x) noexcept;
 
-group group::get(const std::string& arg0, const std::string& arg1) {
-  return detail::singletons::get_group_manager()->get(arg0, arg1);
-}
+  msg_sink(const group& x) noexcept;
 
-group group::anonymous() {
-  return detail::singletons::get_group_manager()->anonymous();
-}
+  msg_sink(const channel& x) noexcept;
 
-void group::add_module(abstract_group::unique_module_ptr ptr) {
-  detail::singletons::get_group_manager()->add_module(std::move(ptr));
-}
+  msg_sink(const scoped_actor& x) noexcept;
 
-abstract_group::module_ptr group::get_module(const std::string& module_name) {
-  return detail::singletons::get_group_manager()->get_module(module_name);
-}
+  inline msg_sink(pointer x) noexcept : m_ptr(x) {
+    // nop
+  }
+
+  msg_sink(const msg_sink&) noexcept = default;
+
+  msg_sink& operator=(const msg_sink&) noexcept = default;
+
+  inline explicit operator bool() noexcept {
+    return static_cast<bool>(m_ptr);
+  }
+
+  inline pointer operator->() noexcept {
+    return m_ptr;
+  }
+
+  intptr_t compare(msg_sink x) const noexcept;
+
+ private:
+  inline abstract_channel* get() const noexcept {
+    return m_ptr;
+  }
+
+  pointer m_ptr;
+};
 
 } // namespace caf
+
+#endif // CAF_MSG_SINK_HPP
+

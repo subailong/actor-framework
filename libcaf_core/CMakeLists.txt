@@ -53,6 +53,7 @@ set (LIBCAF_CORE_SRCS
      src/group.cpp
      src/group_manager.cpp
      src/match_case.cpp
+     src/msg_sink.cpp
      src/local_actor.cpp
      src/logging.cpp
      src/mailbox_element.cpp
