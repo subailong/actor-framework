@@ -25,6 +25,9 @@ endif()
 if(NOT CAF_NO_OPENCL)
   set(CAF_NO_OPENCL no)
 endif()
+if(NOT CAF_USE_ASIO)
+  set(CAF_USE_ASIO no)
+endif()
 
 
 ################################################################################
@@ -224,6 +227,10 @@ endif()
 
 if(CAF_NO_MEM_MANAGEMENT)
   add_definitions(-DCAF_NO_MEM_MANAGEMENT)
+endif()
+
+if (CAF_USE_ASIO)
+  add_definitions(-DCAF_USE_ASIO)
 endif()
 
 
@@ -490,6 +497,7 @@ message(STATUS
         "\nRuntime checks:    ${CAF_ENABLE_RUNTIME_CHECKS}"
         "\nLog level:         ${LOG_LEVEL_STR}"
         "\nWith mem. mgmt.:   ${CAF_BUILD_MEM_MANAGEMENT}"
+        "\nUse Boost ASIO:    ${CAF_USE_ASIO}"
         "\n"
         "\nBuild examples:    ${CAF_BUILD_EXAMPLES}"
         "\nBuild unit tests:  ${CAF_BUILD_UNIT_TESTS}"
