@@ -13,7 +13,6 @@ set (LIBCAF_IO_SRCS
      src/middleman.cpp
      src/hook.cpp
      src/interfaces.cpp
-     src/default_multiplexer.cpp
      src/publish.cpp
      src/publish_local_groups.cpp
      src/remote_actor.cpp
@@ -23,6 +22,12 @@ set (LIBCAF_IO_SRCS
      src/unpublish.cpp
      src/acceptor_manager.cpp
      src/multiplexer.cpp)
+
+if (CAF_USE_ASIO)
+  set(LIBCAF_IO_SRCS ${LIBCAF_IO_SRCS} src/asio_multiplexer.cpp)
+else()
+  set(LIBCAF_IO_SRCS ${LIBCAF_IO_SRCS} src/default_multiplexer.cpp)
+endif()
 
 # build shared library if not compiling static only
 if (NOT "${CAF_BUILD_STATIC_ONLY}" STREQUAL "yes")
@@ -47,6 +52,22 @@ if ("${CAF_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${CAF_BUILD_STATIC}" STREQUAL 
     install(TARGETS libcaf_ioStatic ARCHIVE DESTINATION lib)
   endif()
 endif ()
+
+################################################################################
+#                        Boost ASIO for the multiplexer                        #
+################################################################################
+
+if (CAF_USE_ASIO)
+  if (CAF_BUILD_STATIC_ONLY)
+    set(Boost_USE_STATIC_LIBS ON) # only find static libs
+  endif()
+  set(Boost_USE_MULTITHREADED ON)
+  find_package(Boost REQUIRED COMPONENTS ) #system thread regex)
+  if (Boost_FOUND)
+    set(INCLUDE_DIRS "${INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}")
+    set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARIES})
+  endif()
+endif()
 
 link_directories(${LD_DIRS})
 include_directories(. ${INCLUDE_DIRS})
