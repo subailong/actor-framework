@@ -53,22 +53,6 @@ if ("${CAF_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${CAF_BUILD_STATIC}" STREQUAL 
   endif()
 endif ()
 
-################################################################################
-#                        Boost ASIO for the multiplexer                        #
-################################################################################
-
-if (CAF_USE_ASIO)
-  if (CAF_BUILD_STATIC_ONLY)
-    set(Boost_USE_STATIC_LIBS ON) # only find static libs
-  endif()
-  set(Boost_USE_MULTITHREADED ON)
-  find_package(Boost REQUIRED COMPONENTS system)
-  if (Boost_FOUND)
-    set(INCLUDE_DIRS "${INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}")
-    set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARIES})
-  endif()
-endif()
-
 link_directories(${LD_DIRS})
 include_directories(. ${INCLUDE_DIRS})
 
